@@ -10,7 +10,7 @@ async function registerUser(req, res) {
   });
 
   if (isUserAlreadyExists) {
-    res.status(409).json({ message: "User already exists" });
+    return res.status(409).json({ message: "User already exists" });
   }
 
   const hash = await bcrypt.hash(password, 10);
@@ -62,7 +62,7 @@ async function loginUser(req, res) {
   const isPasswordValid = await bcrypt.compare(password, user.password);
 
   if (!isPasswordValid) {
-    res.status(401).json({ message: "Invaid credentials" });
+    return res.status(401).json({ message: "Invaid credentials" });
   }
 
   const token = jwt.sign(
@@ -86,4 +86,58 @@ async function loginUser(req, res) {
   });
 }
 
-module.exports = { registerUser, loginUser };
+async function getCurrentUser(req, res) {
+  try {
+    const user = await userModel.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({
+      message: "User fetched successfully",
+      user,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+async function updateUser(req, res) {
+  try {
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
+    const user = await userModel.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (name === user.name) {
+      return res.status(400).json({
+        message: "New name must be different from the current name",
+      });
+    }
+
+    user.name = name;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Name updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+module.exports = { registerUser, loginUser, getCurrentUser, updateUser };
