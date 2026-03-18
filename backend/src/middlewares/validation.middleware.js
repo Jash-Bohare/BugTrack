@@ -22,11 +22,6 @@ const registerUserValidationRules = [
     .isLength({ min: 6 })
     .withMessage("Password must be at least 6 characters long"),
 
-  body("role")
-    .isString()
-    .withMessage("Role must be a string")
-    .isIn(["user", "admin"])
-    .withMessage("Invalid role"),
   validateResult,
 ];
 

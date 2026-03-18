@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.post("/register", validationRules.registerUserValidationRules, authController.registerUser);
 router.post("/login", authController.loginUser);
+router.post("/verify-otp", authController.verifyOtp)
 router.get("/me", authMiddleware.authMiddleware, authController.getCurrentUser);
 router.patch("/me", authMiddleware.authMiddleware, authController.updateUser);
 
