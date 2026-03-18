@@ -134,8 +134,29 @@ async function verifyOtp(req, res) {
 
     await otpModel.deleteOne({ userId: user._id });
 
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "strict",
+    });
+
     return res.status(200).json({
       message: "Email verified successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
     return res.status(500).json({ message: "Server error" });
@@ -196,10 +217,16 @@ async function updateUser(req, res) {
   }
 }
 
+async function logoutUser(req, res) {
+  res.clearCookie("token");
+  res.status(200).json({ message: "User logged out successfully" });
+}
+
 module.exports = {
   registerUser,
   loginUser,
   verifyOtp,
   getCurrentUser,
   updateUser,
+  logoutUser,
 };
