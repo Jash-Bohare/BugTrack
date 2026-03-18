@@ -5,9 +5,7 @@ const bcrypt = require("bcryptjs");
 async function registerUser(req, res) {
   const { name, email, password, role = "user" } = req.body;
 
-  const isUserAlreadyExists = await userModel.findOne({
-    $or: [{ name }, { email }],
-  });
+  const isUserAlreadyExists = await userModel.findOne({email});
 
   if (isUserAlreadyExists) {
     return res.status(409).json({ message: "User already exists" });
@@ -45,11 +43,9 @@ async function registerUser(req, res) {
 }
 
 async function loginUser(req, res) {
-  const { name, email, password } = req.body;
+  const { email, password } = req.body;
 
-  const user = await userModel.findOne({
-    $or: [{ name }, { email }],
-  });
+  const user = await userModel.findOne({ email });
 
   if (!user) {
     return res.status(401).json({ message: "Invalid credentials" });
@@ -62,7 +58,7 @@ async function loginUser(req, res) {
   const isPasswordValid = await bcrypt.compare(password, user.password);
 
   if (!isPasswordValid) {
-    return res.status(401).json({ message: "Invaid credentials" });
+    return res.status(401).json({ message: "Invalid credentials" });
   }
 
   const token = jwt.sign(
@@ -70,7 +66,7 @@ async function loginUser(req, res) {
       id: user._id,
       role: user.role,
     },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET, {expiresIn: "1d"}
   );
 
   res.cookie("token", token);
