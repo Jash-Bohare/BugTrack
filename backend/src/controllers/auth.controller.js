@@ -48,61 +48,6 @@ async function registerUser(req, res) {
   }
 }
 
-async function loginUser(req, res) {
-  try {
-    const { email, password } = req.body;
-
-    const user = await userModel.findOne({ email });
-
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    if (!password) {
-      return res.status(401).json({ message: "Password missing" });
-    }
-
-    if (!user.isVerified) {
-      return res.status(403).json({
-        message: "Please verify your email first",
-      });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" },
-    );
-
-    res.cookie("token", token, {
-      http: true,
-      secure: false,
-      sameSite: "strict",
-    });
-
-    res.status(200).json({
-      message: "User logged in successfully",
-      user: {
-        id: user._id,
-        username: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({ message: "Server error" });
-  }
-}
-
 async function verifyOtp(req, res) {
   try {
     const { email, otp } = req.body;
@@ -154,6 +99,61 @@ async function verifyOtp(req, res) {
       user: {
         id: user._id,
         name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+async function loginUser(req, res) {
+  try {
+    const { email, password } = req.body;
+
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    if (!password) {
+      return res.status(401).json({ message: "Password missing" });
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({
+        message: "Please verify your email first",
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.cookie("token", token, {
+      http: true,
+      secure: false,
+      sameSite: "strict",
+    });
+
+    res.status(200).json({
+      message: "User logged in successfully",
+      user: {
+        id: user._id,
+        username: user.name,
         email: user.email,
         role: user.role,
       },
