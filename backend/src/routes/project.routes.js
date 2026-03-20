@@ -8,5 +8,6 @@ const router = express.Router();
 router.post("/projects", authMiddleware.authMiddleware, validationRules.projectValidationRules, projectController.createProject);
 router.get("/projects", authMiddleware.authMiddleware, projectController.getAllProjects);
 router.get("/projects/:id", authMiddleware.authMiddleware, projectController.getProjectById);
+router.post("/projects/:id/add-member", authMiddleware.authMiddleware, projectController.addMembers)
 
 module.exports = router;

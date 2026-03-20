@@ -63,7 +63,7 @@ async function getProjectById(req, res) {
     }
 
     const isMember = project.members.some(
-      (member) => member.toString() === userId
+      (member) => member.toString() === userId,
     );
 
     if (!isMember) {
@@ -83,4 +83,57 @@ async function getProjectById(req, res) {
   }
 }
 
-module.exports = { createProject, getAllProjects, getProjectById };
+async function addMembers(req, res) {
+  try {
+    const projectId = req.params.id;
+    const userId = req.user.id;
+    const { email } = req.body;
+
+    const project = await projectModel.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    if (project.ownerId.toString() !== userId) {
+      return res.status(403).json({
+        message: "Access denied. You are not owner of the project",
+      });
+    }
+
+    const userToAdd = await userModel.findOne({ email });
+
+    if (!userToAdd) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const isAlreadyMember = project.members.some(
+      (member) => member.toString() === userToAdd._id.toString(),
+    );
+
+    if (isAlreadyMember) {
+      return res.status(400).json({
+        message: "User is already a member of this project",
+      });
+    }
+
+    project.members.push(userToAdd._id);
+
+    await project.save();
+
+    return res.status(200).json({
+      message: "Member added successfully",
+      project,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Something went wrong",
+    });
+  }
+}
+
+module.exports = { createProject, getAllProjects, getProjectById, addMembers };
