@@ -3,20 +3,12 @@ const userModel = require("../models/user.model");
 
 async function createProject(req, res) {
   try {
-    const user = await userModel.findById(req.user.id);
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
-
-    if (!user.isVerified) {
+    if (!req.user.isVerified) {
       return res.status(403).json({
         message: "Please verify your email before creating a project",
       });
     }
-    
+
     const { name, description } = req.body;
 
     const project = await projectModel.create({
@@ -38,4 +30,23 @@ async function createProject(req, res) {
   }
 }
 
-module.exports = { createProject };
+async function userProjects(req, res) {
+  try {
+    const userId = req.user.id;
+
+    const projects = await projectModel.find({
+      members: userId,
+    });
+
+    return res.status(200).json({
+      message: "Projects fetched successfully",
+      projects,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Something went wrong",
+    });
+  }
+}
+
+module.exports = { createProject, userProjects };

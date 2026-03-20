@@ -83,6 +83,7 @@ async function verifyOtp(req, res) {
       {
         id: user._id,
         role: user.role,
+        isVerified: user.isVerified
       },
       process.env.JWT_SECRET,
       { expiresIn: "1d" },
@@ -138,6 +139,7 @@ async function loginUser(req, res) {
       {
         id: user._id,
         role: user.role,
+        isVerified: user.isVerified
       },
       process.env.JWT_SECRET,
       { expiresIn: "1d" },
