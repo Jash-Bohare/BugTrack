@@ -30,7 +30,7 @@ async function createProject(req, res) {
   }
 }
 
-async function userProjects(req, res) {
+async function getAllProjects(req, res) {
   try {
     const userId = req.user.id;
 
@@ -49,4 +49,38 @@ async function userProjects(req, res) {
   }
 }
 
-module.exports = { createProject, userProjects };
+async function getProjectById(req, res) {
+  try {
+    const projectId = req.params.id;
+    const userId = req.user.id;
+
+    const project = await projectModel.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    const isMember = project.members.some(
+      (member) => member.toString() === userId
+    );
+
+    if (!isMember) {
+      return res.status(403).json({
+        message: "Access denied. You are not a member of this project",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Project fetched successfully",
+      project,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Something went wrong",
+    });
+  }
+}
+
+module.exports = { createProject, getAllProjects, getProjectById };
