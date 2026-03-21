@@ -1,6 +1,7 @@
 const express = require("express");
 const authRoutes = require("./routes/auth.routes");
 const projectRoutes = require("./routes/project.routes");
+const issueRoutes = require("./routes/issue.routes");
 const cookieParser = require("cookie-parser");
 
 const app = express();
@@ -9,5 +10,6 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/project", projectRoutes);
+app.use("/api/issue", issueRoutes);
 
 module.exports = app;
