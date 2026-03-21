@@ -56,14 +56,20 @@ async function getIssues(req, res) {
   try {
     const userId = req.user.id;
 
-    const {
+    let {
       projectId,
       status,
       priority,
       assignee,
       page = 1,
       limit = 10,
+      sort = "createdAt",
+      order = "desc",
+      q,
     } = req.query;
+
+    page = Number(page);
+    limit = Number(limit);
 
     if (projectId) {
       const project = await projectModel.findById(projectId);
@@ -92,16 +98,34 @@ async function getIssues(req, res) {
     if (priority) filter.priority = priority;
     if (assignee) filter.assigneeId = assignee;
 
+    if (q) {
+      filter.$text = { $search: q };
+    }
+
     const skip = (page - 1) * limit;
 
-    const issues = await issueModel
-      .find(filter)
-      .skip(skip)
-      .limit(Number(limit))
-      .sort({ createdAt: -1 });
+    const sortOrder = order === "asc" ? 1 : -1;
+
+    let sortObj = {};
+
+    if (q) {
+      sortObj = { score: { $meta: "textScore" } };
+    } else {
+      sortObj[sort] = sortOrder;
+    }
+
+    const query = issueModel.find(filter);
+
+    if (q) {
+      query.select({ score: { $meta: "textScore" } });
+    }
+
+    const issues = await query.sort(sortObj).skip(skip).limit(limit);
 
     return res.status(200).json({
       message: "Issues fetched successfully",
+      page,
+      limit,
       count: issues.length,
       issues,
     });

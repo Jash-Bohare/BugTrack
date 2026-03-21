@@ -20,12 +20,14 @@ const issueSchema = new mongoose.Schema(
       type: String,
       enum: ["open", "in-progress", "resolved", "closed"],
       default: "open",
+      index: true,
     },
 
     priority: {
       type: String,
       enum: ["low", "medium", "high", "critical"],
       default: "medium",
+      index: true,
     },
 
     projectId: {
@@ -45,12 +47,22 @@ const issueSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
+      index: true,
     },
   },
   {
     timestamps: true,
   },
 );
+
+issueSchema.index({ projectId: 1, status: 1 });
+issueSchema.index({ projectId: 1, priority: 1 });
+issueSchema.index({ projectId: 1, assigneeId: 1 });
+
+issueSchema.index({
+  title: "text",
+  description: "text",
+});
 
 const issueModel = mongoose.model("issue", issueSchema);
 
