@@ -277,4 +277,80 @@ async function updateIssue(req, res) {
   }
 }
 
-module.exports = { createIssue, getIssues, getIssueById, updateIssue };
+async function changeStatus(req, res) {
+  try {
+    const userId = req.user.id;
+    const issueId = req.params.id;
+    const { status } = req.body;
+
+    const allowedStatuses = ["open", "in-progress", "resolved", "closed"];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        message: "Invalid status value",
+      });
+    }
+
+    const issue = await issueModel.findById(issueId);
+    if (!issue) {
+      return res.status(404).json({
+        message: "Issue not found",
+      });
+    }
+
+    const project = await projectModel.findById(issue.projectId);
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    const isMember = project.members.some(
+      (member) => member.toString() === userId,
+    );
+
+    if (!isMember) {
+      return res.status(403).json({
+        message: "Access denied. You are not a member of this project",
+      });
+    }
+
+    if (status === issue.status) {
+      return res.status(400).json({
+        message: "Status is already the same",
+      });
+    }
+
+    const oldStatus = issue.status;
+
+    issue.status = status;
+    await issue.save();
+
+    await activityModel.create({
+      issueId,
+      userId,
+      action: "STATUS_CHANGED",
+      meta: {
+        old: oldStatus,
+        new: status,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Status updated successfully",
+      issue,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Something went wrong",
+    });
+  }
+}
+
+module.exports = {
+  createIssue,
+  getIssues,
+  getIssueById,
+  updateIssue,
+  changeStatus,
+};

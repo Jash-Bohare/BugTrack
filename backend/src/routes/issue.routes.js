@@ -8,5 +8,6 @@ router.post("/issues", authMiddleware.authMiddleware, issueController.createIssu
 router.get("/issues", authMiddleware.authMiddleware, issueController.getIssues);
 router.get("/issues/:id", authMiddleware.authMiddleware, issueController.getIssueById);
 router.patch("/issues/:id", authMiddleware.authMiddleware, issueController.updateIssue);
+router.patch("/issues/:id/status", authMiddleware.authMiddleware, issueController.changeStatus);
 
 module.exports = router;
