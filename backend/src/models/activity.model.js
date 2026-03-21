@@ -16,7 +16,7 @@ const activitySchema = new mongoose.Schema({
 
   action: {
     type: String,
-    enum: ["CREATED", "UPDATED", "ASSIGNED", "STATUS_CHANGED", "DELETED"],
+    enum: ["CREATED", "UPDATED", "ASSIGNED", "COMMENTED", "STATUS_CHANGED", "DELETED"],
     required: true,
   },
 
