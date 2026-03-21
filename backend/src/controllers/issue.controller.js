@@ -159,4 +159,122 @@ async function getIssueById(req, res) {
   }
 }
 
-module.exports = { createIssue, getIssues, getIssueById };
+async function updateIssue(req, res) {
+  try {
+    const { title, description, priority, assigneeId } = req.body;
+    const issueId = req.params.id;
+    const userId = req.user.id;
+
+    const issue = await issueModel.findById(issueId);
+    if (!issue) {
+      return res.status(404).json({
+        message: "Issue not found",
+      });
+    }
+
+    const project = await projectModel.findById(issue.projectId);
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    const isMember = project.members.some(
+      (member) => member.toString() === userId,
+    );
+
+    if (!isMember) {
+      return res.status(403).json({
+        message: "Access denied. You are not a member of this project",
+      });
+    }
+
+    let activities = [];
+
+    if (title && title !== issue.title) {
+      activities.push({
+        issueId,
+        userId,
+        action: "UPDATED",
+        meta: {
+          field: "title",
+          old: issue.title,
+          new: title,
+        },
+      });
+
+      issue.title = title;
+    }
+
+    if (description && description !== issue.description) {
+      activities.push({
+        issueId,
+        userId,
+        action: "UPDATED",
+        meta: {
+          field: "description",
+          old: issue.description,
+          new: description,
+        },
+      });
+
+      issue.description = description;
+    }
+
+    if (priority && priority !== issue.priority) {
+      activities.push({
+        issueId,
+        userId,
+        action: "UPDATED",
+        meta: {
+          field: "priority",
+          old: issue.priority,
+          new: priority,
+        },
+      });
+
+      issue.priority = priority;
+    }
+
+    if (assigneeId && assigneeId !== issue.assigneeId?.toString()) {
+      const isValidAssignee = project.members.some(
+        (member) => member.toString() === assigneeId,
+      );
+
+      if (!isValidAssignee) {
+        return res.status(400).json({
+          message: "Assignee must be a project member",
+        });
+      }
+
+      activities.push({
+        issueId,
+        userId,
+        action: "ASSIGNED",
+        meta: {
+          old: issue.assigneeId,
+          new: assigneeId,
+        },
+      });
+
+      issue.assigneeId = assigneeId;
+    }
+
+    await issue.save();
+
+    if (activities.length > 0) {
+      await activityModel.insertMany(activities);
+    }
+
+    return res.status(200).json({
+      message: "Issue updated successfully",
+      issue,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Something went wrong",
+    });
+  }
+}
+
+module.exports = { createIssue, getIssues, getIssueById, updateIssue };
