@@ -4,10 +4,7 @@ const authMiddleware = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
-router.post(
-  "/issues",
-  authMiddleware.authMiddleware,
-  issueController.createIssue,
-);
+router.post("/issues", authMiddleware.authMiddleware, issueController.createIssue);
+router.get("/issues", authMiddleware.authMiddleware, issueController.getIssues);
 
 module.exports = router;
