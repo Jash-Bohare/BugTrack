@@ -347,10 +347,58 @@ async function changeStatus(req, res) {
   }
 }
 
+async function deleteIssue(req, res) {
+  try {
+    const issueId = req.params.id;
+    const userId = req.user.id;
+
+    const issue = await issueModel.findById(issueId);
+    if (!issue) {
+      return res.status(404).json({
+        message: "Issue not found",
+      });
+    }
+
+    const project = await projectModel.findById(issue.projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    const isReporter = issue.reporterId.toString() === userId;
+    const isOwner = project.ownerId.toString() === userId;
+
+    if (!isReporter && !isOwner) {
+      return res.status(403).json({
+        message: "Access denied. You are not authorized to delete this issue",
+      });
+    }
+
+    await activityModel.create({
+      issueId,
+      userId,
+      action: "DELETED",
+      meta: {},
+    });
+
+    await issue.deleteOne();
+    return res.status(200).json({
+      message: "Issue deleted successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong",
+    });
+  }
+}
+
 module.exports = {
   createIssue,
   getIssues,
   getIssueById,
   updateIssue,
   changeStatus,
+  deleteIssue,
 };

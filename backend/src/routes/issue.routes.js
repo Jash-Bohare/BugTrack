@@ -9,5 +9,6 @@ router.get("/issues", authMiddleware.authMiddleware, issueController.getIssues);
 router.get("/issues/:id", authMiddleware.authMiddleware, issueController.getIssueById);
 router.patch("/issues/:id", authMiddleware.authMiddleware, issueController.updateIssue);
 router.patch("/issues/:id/status", authMiddleware.authMiddleware, issueController.changeStatus);
+router.delete("/issues/:id", authMiddleware.authMiddleware, issueController.deleteIssue);
 
 module.exports = router;
