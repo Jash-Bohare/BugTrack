@@ -174,4 +174,48 @@ async function deleteComment(req, res) {
   }
 }
 
-module.exports = { createComment, getComments, deleteComment };
+async function getNotifications(req, res) {
+  try {
+    const userId = req.user.id;
+
+    const projects = await projectModel
+      .find({
+        members: userId,
+      })
+      .select("_id");
+
+    const projectIds = projects.map((p) => p._id);
+
+    const issues = await issueModel
+      .find({
+        projectId: { $in: projectIds },
+      })
+      .select("_id");
+
+    const issueIds = issues.map((i) => i._id);
+
+    const activities = await activityModel
+      .find({
+        issueId: { $in: issueIds },
+      })
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    return res.status(200).json({
+      message: "Notifications fetched successfully",
+      count: activities.length,
+      notifications: activities,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Something went wrong",
+    });
+  }
+}
+
+module.exports = {
+  createComment,
+  getComments,
+  deleteComment,
+  getNotifications,
+};
