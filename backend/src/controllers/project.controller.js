@@ -83,7 +83,7 @@ async function getProjectById(req, res) {
   }
 }
 
-async function addMembers(req, res) {
+async function addMember(req, res) {
   try {
     const projectId = req.params.id;
     const userId = req.user.id;
@@ -136,4 +136,103 @@ async function addMembers(req, res) {
   }
 }
 
-module.exports = { createProject, getAllProjects, getProjectById, addMembers };
+async function removeMember(req, res) {
+  try {
+    const projectId = req.params.id;
+    const userId = req.user.id;
+    const { email } = req.body;
+
+    const project = await projectModel.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    if (project.ownerId.toString() !== userId) {
+      return res.status(403).json({
+        message: "Access denied. You are not owner of the project",
+      });
+    }
+
+    const userToRemove = await userModel.findOne({ email });
+
+    if (!userToRemove) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (userToRemove._id.toString() === project.ownerId.toString()) {
+      return res.status(400).json({
+        message: "Owner cannot be removed from the project",
+      });
+    }
+
+    const isMember = project.members.some(
+      (member) => member.toString() === userToRemove._id.toString(),
+    );
+
+    if (!isMember) {
+      return res.status(400).json({
+        message: "User is not a member of this project",
+      });
+    }
+
+    project.members = project.members.filter(
+      (member) => member.toString() !== userToRemove._id.toString(),
+    );
+
+    await project.save();
+
+    return res.status(200).json({
+      message: "Member removed successfully",
+      project,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Something went wrong",
+    });
+  }
+}
+
+async function deleteProject(req, res) {
+  try {
+    const projectId = req.params.id;
+    const userId = req.user.id;
+
+    const project = await projectModel.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    if (project.ownerId.toString() !== userId) {
+      return res.status(403).json({
+        message: "Access denied. You are not owner of the project",
+      });
+    }
+
+    await project.deleteOne();
+
+    res.status(200).json({
+      message: "Project deleted successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong",
+    });
+  }
+}
+
+module.exports = {
+  createProject,
+  getAllProjects,
+  getProjectById,
+  addMember,
+  removeMember,
+  deleteProject,
+};

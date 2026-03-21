@@ -1,13 +1,40 @@
 const express = require("express");
-const projectController = require("../controllers/project.controller")
-const validationRules = require("../middlewares/validation.middleware")
-const authMiddleware = require("../middlewares/auth.middleware")
+const projectController = require("../controllers/project.controller");
+const validationRules = require("../middlewares/validation.middleware");
+const authMiddleware = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
-router.post("/projects", authMiddleware.authMiddleware, validationRules.projectValidationRules, projectController.createProject);
-router.get("/projects", authMiddleware.authMiddleware, projectController.getAllProjects);
-router.get("/projects/:id", authMiddleware.authMiddleware, projectController.getProjectById);
-router.post("/projects/:id/add-member", authMiddleware.authMiddleware, projectController.addMembers)
+router.post(
+  "/projects",
+  authMiddleware.authMiddleware,
+  validationRules.projectValidationRules,
+  projectController.createProject,
+);
+router.get(
+  "/projects",
+  authMiddleware.authMiddleware,
+  projectController.getAllProjects,
+);
+router.get(
+  "/projects/:id",
+  authMiddleware.authMiddleware,
+  projectController.getProjectById,
+);
+router.post(
+  "/projects/:id/add-member",
+  authMiddleware.authMiddleware,
+  projectController.addMember,
+);
+router.post(
+  "/projects/:id/remove-member",
+  authMiddleware.authMiddleware,
+  projectController.removeMember,
+);
+router.delete(
+  "/projects/:id",
+  authMiddleware.authMiddleware,
+  projectController.deleteProject,
+);
 
 module.exports = router;
