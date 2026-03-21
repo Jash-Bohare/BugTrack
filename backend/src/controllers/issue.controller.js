@@ -112,4 +112,51 @@ async function getIssues(req, res) {
   }
 }
 
-module.exports = { createIssue, getIssues };
+async function getIssueById(req, res) {
+  try {
+    const issueId = req.params.id;
+    const userId = req.user.id;
+
+    const issue = await issueModel.findById(issueId);
+    if (!issue) {
+      return res.status(404).json({
+        message: "Issue not found",
+      });
+    }
+
+    const project = await projectModel.findById(issue.projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    const isMember = project.members.some(
+      (member) => member.toString() === userId,
+    );
+
+    if (!isMember) {
+      return res.status(403).json({
+        message: "Access denied. You are not a member of this project",
+      });
+    }
+
+    const activities = await activityModel
+      .find({ issueId: issueId })
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      message: "Issue fetched successfully",
+      issue,
+      activities,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Something went wrong",
+    });
+  }
+}
+
+module.exports = { createIssue, getIssues, getIssueById };
