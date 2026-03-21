@@ -5,5 +5,6 @@ const authMiddleware = require("../middlewares/auth.middleware");
 const router = express.Router();
 
 router.post("/comments/:id", authMiddleware.authMiddleware, commentController.createComment);
+router.get("/issues/:id/comments", authMiddleware.authMiddleware, commentController.getComments)
 
 module.exports = router;
