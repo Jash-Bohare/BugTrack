@@ -126,4 +126,52 @@ async function getComments(req, res) {
   }
 }
 
-module.exports = { createComment, getComments };
+async function deleteComment(req, res) {
+  try {
+    const commentId = req.params.commentId;
+    const userId = req.user.id;
+
+    const comment = await commentModel.findById(commentId);
+
+    if (!comment) {
+      return res.status(404).json({
+        message: "Comment not found",
+      });
+    }
+
+    if (comment.userId.toString() !== userId) {
+      return res.status(403).json({
+        message: "Access denied. You are not the author of this comment",
+      });
+    }
+
+    if (comment.isDeleted) {
+      return res.status(400).json({
+        message: "Comment already deleted",
+      });
+    }
+
+    comment.isDeleted = true;
+    await comment.save();
+
+    await activityModel.create({
+      issueId: comment.issueId,
+      userId,
+      action: "DELETED",
+      meta: {
+        commentId: comment._id,
+        type: "comment",
+      },
+    });
+
+    return res.status(200).json({
+      message: "Comment deleted successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Something went wrong",
+    });
+  }
+}
+
+module.exports = { createComment, getComments, deleteComment };
